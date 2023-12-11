@@ -1,0 +1,259 @@
+import argparse
+import struct
+import threading
+import time
+from socket import *
+import json
+import os
+from os.path import join, isfile, getmtime, getsize
+
+# to create a new folder which is detected in the received files
+def create_folder(file_name):
+    file_path = os.getcwd()
+    str_list = file_name.split("/")
+    del (str_list[-1])
+    str = "/"
+    folder_name = str.join(str_list)
+
+    os.makedirs(file_path + "/" + folder_name)
+    return 0
+
+# to import the ip
+def _argparse():
+    parser = argparse.ArgumentParser(description="peer ip")
+    parser.add_argument('--ip', action='store', required=True, dest='peer_ip', help='REER_IP')
+
+    return parser.parse_args()
+
+# to traverse the share list and return a list of file name in share
+def traverse_share(dir_path):
+    file_list = []
+    file_folder_list = os.listdir(dir_path)
+    for file_folder_name in file_folder_list:
+        if isfile(join(dir_path, file_folder_name)):
+            file_list.append(join(dir_path, file_folder_name))
+        else:
+            file_list.extend(traverse_share(join(dir_path, file_folder_name)))
+    return file_list
+
+# to return a list of file name, modified time and size
+def generate_full_list():
+    file_list = traverse_share('share')
+    i = 0
+    arry = []
+    for f in file_list:
+        arry.append([])
+        arry[i].append(f)
+        arry[i].append(getmtime(f))
+        arry[i].append(getsize(f))
+        i = i + 1
+    return arry
+
+# get a file name list
+def generate_name_list(file_list):
+    i = 0
+    arry = []
+    for f in file_list:
+        # f = file_path+'/'+f
+        arry.append(f)
+        i = i + 1
+    return arry
+
+# get a modified time list
+def generate_moditime_list(file_list):
+    i = 0
+    arry = []
+    for f in file_list:
+        arry.append(getmtime(f))
+        i = i + 1
+    return arry
+
+# get a size list
+def generate_size_list(file_list):
+    i = 0
+    arry = []
+    for f in file_list:
+        arry.append(getsize(f))
+        i = i + 1
+    return arry
+
+# used to connect and reconnect PC_A and PC_B
+def connect(port):
+    peer_ip = _argparse().peer_ip
+    try:
+        xsocket = socket(AF_INET, SOCK_STREAM)
+        xsocket.connect((peer_ip, port))
+    except ConnectionRefusedError:
+        host_socket = socket(AF_INET, SOCK_STREAM)
+        host_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        host_socket.bind(('', port))
+        host_socket.listen(10)
+        xsocket, peer_addr = host_socket.accept()
+    return xsocket
+
+# a scanner which keeps scanning the local share folder and send out message to peer
+def thread_new_file_scanner():
+    local_name_list = []
+    local_time_list = []
+    while 1:
+        file_list = traverse_share('share')
+        update_local_name_list = generate_name_list(file_list)
+        update_local_time_list = generate_moditime_list(file_list)
+        new_file_name_list = list(set(update_local_name_list) - set(local_name_list))
+        new_file_time_list = list(set(update_local_time_list) - set(local_time_list))
+        if new_file_name_list != []:
+            dict_possible_new_file = {'cmd': 'newfile', 'filelist': new_file_name_list}
+            connect_socket.send(json.dumps(dict_possible_new_file).encode())
+            local_name_list = update_local_name_list
+            local_time_list = update_local_time_list
+        elif new_file_time_list != []:
+            for f in generate_full_list():
+                if f[1] == new_file_time_list[0]:
+                    file_possible_to_be_update = f[0]
+                    size1 = getsize(file_possible_to_be_update)
+                    time.sleep(0.1)
+                    size2 = getsize(file_possible_to_be_update)
+                    if size1 == size2:
+                        file_need_to_be_update = file_possible_to_be_update
+                        dict_update_file = {'cmd': 'update', 'file': file_need_to_be_update, 'size': f[2]}
+                        connect_socket.send(json.dumps(dict_update_file).encode())
+                        file_sender(file_need_to_be_update)
+
+        time.sleep(2)
+
+# used to pack files and send them out
+def file_sender(file_name):
+    with open(file_name, 'rb') as f:
+        file_size = getsize(file_name)
+        f.seek(0, 2)
+        size = f.tell()
+        f.seek(0, 0)
+        while f.tell() < size:
+            bin_file = f.read(30000)
+            length_bin_file = len(bin_file)
+            bin_file_name = file_name.encode()
+            length_bin_file_name = len(bin_file_name)
+            bin_file_packet = struct.pack('!III', length_bin_file_name, length_bin_file,
+                                          file_size) + bin_file_name + bin_file
+            file_socket.send(bin_file_packet)
+
+# used to receive files and save them in share folder
+def file_downloader(file_wanted_list):
+    file_received_list = []
+    file_size = 0
+    file_received_size = 0
+    while file_wanted_list != file_received_list or file_size != file_received_size:
+
+        length_bin_file_name_to_download, length_bin_file_to_download, file_size = struct.unpack('!III',
+                                                                                                 file_socket.recv(
+                                                                                                     12))
+        buf = b''
+        print('...')
+        while len(buf) < length_bin_file_name_to_download:
+            buf += file_socket.recv(length_bin_file_name_to_download)
+
+        bin_file_name_to_download = buf[:length_bin_file_to_download]
+        buf = buf[length_bin_file_name_to_download:]
+
+        while len(buf) < length_bin_file_to_download:
+            buf += file_socket.recv(length_bin_file_to_download)
+        bin_file_to_download = buf
+
+        file_name_to_download = bin_file_name_to_download.decode()
+        if file_name_to_download != '':
+            if file_name_to_download not in file_received_list:
+                file_received_list.append(file_name_to_download)
+            if file_name_to_download != '':
+                try:
+                    f = open(file_name_to_download, 'ab+')
+                    f.write(bin_file_to_download)
+                    f.close()
+                except:
+                    create_folder(file_name_to_download)
+                    f = open(file_name_to_download, 'ab+')
+                    f.write(bin_file_to_download)
+                    f.close()
+            file_received_size = getsize(file_name_to_download)
+
+# keep listening to the peer and receive messages
+def listener():
+    bin_msg = connect_socket.recv(2000)
+    msg = json.loads(bin_msg.decode())
+
+    if 'cmd' in msg:
+        cmd = msg['cmd']
+        if cmd == 'newfile':
+            new_file_list = msg['filelist']
+            file_list = traverse_share('share')
+            file_wanted = list(set(new_file_list) - set(generate_name_list(file_list)))
+
+            dict_file_wanted = {'cmd': 'wanted', 'file': file_wanted}
+            connect_socket.send(json.dumps(dict_file_wanted).encode())
+            file_downloader(file_wanted)
+
+
+        elif cmd == 'update':
+            update_file_name = msg['file']
+            os.remove(update_file_name)
+            file_size = -1
+            file_received_size = 0
+            while file_size != file_received_size:
+
+                length_bin_file_name_to_download, length_bin_file_to_download, file_size = struct.unpack('!III',
+                                                                                                         file_socket.recv(
+                                                                                                             12))
+                buf = b''
+                print('...')
+                while len(buf) < length_bin_file_name_to_download:
+                    buf += file_socket.recv(length_bin_file_name_to_download)
+
+                bin_file_name_to_download = buf[:length_bin_file_to_download]
+                buf = buf[length_bin_file_name_to_download:]
+
+                while len(buf) < length_bin_file_to_download:
+                    buf += file_socket.recv(length_bin_file_to_download)
+                bin_file_to_download = buf
+
+                file_name_to_download = bin_file_name_to_download.decode()
+                if file_name_to_download != '':
+                    if file_name_to_download != '':
+                        f = open(file_name_to_download, 'ab+')
+                        f.write(bin_file_to_download)
+                        f.close()
+                    file_received_size = getsize(file_name_to_download)
+
+
+
+        elif cmd == 'wanted':
+            for m in msg['file']:
+                if m != '':
+                    file_sender(m)
+
+
+def main():
+    # link the two computers through sockets
+    global connect_socket, file_socket
+    port1 = 23089
+    port2 = 26765
+
+    # socket used for message
+    connect_socket = connect(port1)
+    # socket used for sending and receiving files
+    file_socket = connect(port2)
+
+    # add the scanner thread to keep scanning the share folder
+    add_thread_scanner = threading.Thread(target=thread_new_file_scanner)
+    add_thread_scanner.start()
+
+    while 1:
+        try:
+            listener()
+        except json.decoder.JSONDecodeError:
+            # connect failed then try to reconnect
+            connect_socket = connect(port1)
+            file_socket = connect(port2)
+            print('PC_A and PC_B reconnected')
+
+
+if __name__ == '__main__':
+    main()

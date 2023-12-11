@@ -1,0 +1,91 @@
+00
+MD5_2B: PASS
+Result: ...{'RUN_A': True, 'RUN_B': True, 'MD5_1B': True, 'TC_1B': 0.22458243370056152, 'MD5_2A': True, 'TC_2A+TC_FA': 6.545263767242432, 'MD5_FA': True, 'MD5_2B': 1, 'TC_2B': 8.10022234916687}
+
+
+Process finished with exit code 0
+
+
+
+
+
+
+
+
+02
+MD5_2B: PASS...
+
+Result: {'RUN_A': True, 'RUN_B': True, 'MD5_1B': True, 'TC_1B': 0.22452783584594727, 'MD5_2A': True, 'TC_2A+TC_FA': 6.625679969787598, 'MD5_FA': True, 'MD5_2B': 1, 'TC_2B': 7.889195203781128}
+...
+
+Process finished with exit code 0
+
+03
+MD5_2B: PASS...
+
+Result: {'RUN_A': True, 'RUN_B': True, 'MD5_1B': True, 'TC_1B': 0.22488927841186523, 'MD5_2A': True, 'TC_2A+TC_FA': 6.502185344696045, 'MD5_FA': True, 'MD5_2B': 1, 'TC_2B': 8.115586042404175}
+
+Process finished with exit code 0
+
+04
+Traceback (most recent call last):
+File "main.py", line 261, in <module>
+main()
+File "main.py", line 252, in main
+listener()
+File "main.py", line 210, in listener
+buf += file_socket.recv(length_bin_file_name_to_download)
+MemoryError
+
+
+Traceback (most recent call last):
+File "main.py", line 261, in <module>
+main()
+File "main.py", line 252, in main
+listener()
+File "main.py", line 210, in listener
+buf += file_socket.recv(length_bin_file_name_to_download)
+MemoryError
+MD5_2B: PASS
+Result: {'RUN_A': True, 'RUN_B': True, 'MD5_1B': True, 'TC_1B': 0.22385907173156738, 'MD5_2A': True, 'TC_2A+TC_FA': 6.7017693519592285, 'MD5_FA': True, 'MD5_2B': 1, 'TC_2B': 7.664805889129639}
+
+Process finished with exit code 0
+
+
+MD5_2B: PASS
+Result: {'RUN_A': True, 'RUN_B': True, 'MD5_1B': True, 'TC_1B': 0.2241830825805664, 'MD5_2A': True, 'TC_2A+TC_FA': 6.834656238555908, 'MD5_FA': True, 'MD5_2B': 1, 'TC_2B': 6.004943609237671}
+
+Process finished with exit code 0
+
+
+MD5_2B: PASS
+Result: {'RUN_A': True, 'RUN_B': True, 'MD5_1B': True, 'TC_1B': 0.2249600887298584, 'MD5_2A': True, 'TC_2A+TC_FA': 6.749845027923584, 'MD5_FA': True, 'MD5_2B': 1, 'TC_2B': 6.361570596694946}
+
+Process finished with exit code 0
+
+
+MD5_2B: PASS
+Result: {'RUN_A': True, 'RUN_B': True, 'MD5_1B': True, 'TC_1B': 0.22416067123413086, 'MD5_2A': True, 'TC_2A+TC_FA': 6.744926929473877, 'MD5_FA': True, 'MD5_2B': 1, 'TC_2B': 6.976665258407593}
+
+Process finished with exit code 0
+
+
+MD5_2B: PASS
+Result: {'RUN_A': True, 'RUN_B': True, 'MD5_1B': True, 'TC_1B': 0.22467637062072754, 'MD5_2A': True, 'TC_2A+TC_FA': 6.629642724990845, 'MD5_FA': True, 'MD5_2B': 1, 'TC_2B': 8.038285255432129}
+
+Process finished with exit code 0
+
+
+MD5_2B: PASS
+Result: {'RUN_A': True, 'RUN_B': True, 'MD5_1B': True, 'TC_1B': 0.22462010383605957, 'MD5_2A': True, 'TC_2A+TC_FA': 6.689762830734253, 'MD5_FA': True, 'MD5_2B': 1, 'TC_2B': 7.817261457443237}
+
+Process finished with exit code 0
+
+
+MD5_2B: PASS
+Result: {'RUN_A': True, 'RUN_B': True, 'MD5_1B': True, 'TC_1B': 0.24136829376220703, 'MD5_2A': True, 'TC_2A+TC_FA': 6.716180324554443, 'MD5_FA': True, 'MD5_2B': 1, 'TC_2B': 6.610309839248657}
+...
+
+Process finished with exit code 0
+
+
